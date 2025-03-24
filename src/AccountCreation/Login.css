@@ -227,10 +227,68 @@
   text-align: center;
   display: inline-block;
 }
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #4b9b6e;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 20px;
+}
+.login-btn:hover {
+  background-color: #1b5e3a;
+}
 
 .login-signup-button:hover {
   background-color: #1b5e3a;
 }
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.toggle-password-button {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.toggle-password-button:focus {
+  outline: none;
+}
+.password-input-container {
+  position: relative;
+  width: 100%;
+}
+
+.toggle-password-btn {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+}
+.error-message {
+  color: #e74c3c;
+  background-color: rgba(231, 76, 60, 0.1);
+  border: 1px solid #e74c3c;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 15px;
+  font-size: 14px;
+  text-align: center;
+}
+
 
 @media (max-width: 768px) {
   .login-modal {
@@ -261,18 +319,7 @@
   }
 }
 
-.error-message {
-  color: #e74c3c;
-  background-color: rgba(231, 76, 60, 0.1);
-  border: 1px solid #e74c3c;
-  border-radius: 4px;
-  padding: 10px;
-  margin-bottom: 15px;
-  font-size: 14px;
-  text-align: center;
-}
 
-.login-button:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-}
+
+
+

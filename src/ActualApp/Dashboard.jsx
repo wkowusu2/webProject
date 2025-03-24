@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Dashboard.css";
-import Events from "./Events";
 import Documents from "./Documents";
 import Network from "./Network";
 import Messages from "./Messages";
@@ -137,8 +136,6 @@ const Dashboard = () => {
   // Function to render the active component based on the selected tab
   const renderActiveComponent = () => {
     switch (activeTab) {
-      case "calendar":
-        return <Events />;
       case "documents":
         return <Documents initialSection="appointments" />;
       case "network":
@@ -440,15 +437,7 @@ const Dashboard = () => {
             </span>
             <span className="nav-text">Home</span>
           </div>
-          <div
-            className={`nav-item ${activeTab === "calendar" ? "active" : ""}`}
-            onClick={() => setActiveTab("calendar")}
-          >
-            <span className="nav-icon">
-              <AiOutlineCalendar />
-            </span>
-            <span className="nav-text">Calendar</span>
-          </div>
+  
           <div
             className={`nav-item ${activeTab === "documents" ? "active" : ""}`}
             onClick={() => setActiveTab("documents")}

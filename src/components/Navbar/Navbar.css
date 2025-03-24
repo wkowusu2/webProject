@@ -88,6 +88,19 @@
   transition: all 0.3s ease;
 }
 
+.navbar-login-btn {
+  background-color: #4b9b6e;
+  color: white;
+  padding: 8px 20px;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.navbar-login-btn:hover {
+  background-color: #1b5e3a;
+}
+
 @media screen and (max-width: 768px) {
   .hamburger {
     display: flex;
@@ -124,7 +137,7 @@
   .nav-buttons {
     flex-direction: column;
     width: 100%;
-    margin: 0.5rem 0;
+    margin: 1rem 0;
     gap: 0.5rem;
   }
 

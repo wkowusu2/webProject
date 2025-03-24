@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './Login.css';
+import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFacebookF, faGoogle } from '@fortawesome/free-brands-svg-icons';
 import { auth, db, googleProvider } from "../../firebase.config";
@@ -8,6 +9,7 @@ import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 
 const Login = () => {
+  const [showPassword, setShowPassword] = useState(false); // Add this state
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -119,20 +121,29 @@ const handleSubmit = async (e) => {
             
             <div className="form-group">
               <label htmlFor="password">*Password</label>
-              <input 
-                type="password" 
-                id="password" 
-                name="password" 
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-              />
+              <div className="password-input-container">
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  id="password" 
+                  name="password" 
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+                <button 
+                  type="button" 
+                  className="toggle-password-btn"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
+                </button>
+              </div>
             </div>
             
             <button 
               type="submit" 
-              className="login-button"
+              className="login-btn"
               disabled={loading}
             >
               {loading ? 'Logging in...' : 'Login'}
@@ -159,4 +170,4 @@ const handleSubmit = async (e) => {
   );
 };
 
-export default Login; 
+export default Login;
