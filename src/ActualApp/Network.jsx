@@ -340,7 +340,7 @@ const Network = () => {
                 className={`stat-item ${activeTab === 'social' ? 'active' : ''}`}
                 onClick={() => setActiveTab('social')}
               >
-                <h3>Following/followers</h3>
+                <h3>Following/Followers</h3>
                 <div className="stat-number">{following.length + followers.length}</div>
               </div>
             </div>

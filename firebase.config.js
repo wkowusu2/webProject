@@ -21,3 +21,26 @@ const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 
 export { auth, db, googleProvider };
+
+
+
+// In your firebase config file
+//import { getStorage } from 'firebase/storage';
+
+// Initialize Storage
+//const storage = getStorage(app);
+
+
+// for Post images
+// rules_version = '2';
+// service firebase.storage {
+//   match /b/{bucket}/o {
+//     match /posts/{userId}/{allPaths=**} {
+//       allow read: if true;
+//       allow write: if request.auth != null 
+//                    && request.auth.uid == userId
+//                    && request.resource.size < 5 * 1024 * 1024
+//                    && request.resource.contentType.matches('image/.*');
+//     }
+//   }
+// }
