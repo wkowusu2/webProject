@@ -49,7 +49,7 @@ function App() {
       <Routes>
         {user ? (
           <>
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard userId={user.uid} />} />
             <Route path="/referrals" element={<Referrals />} />
             <Route path="*" element={<Navigate to="/dashboard" />} />
             <Route path="/messages" element={<Messages userId={user.uid} />} />

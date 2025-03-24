@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import './Network.css';
 import { FaUserPlus, FaMapMarkerAlt } from 'react-icons/fa';
 import ProfileModal from './ProfileModal';
-import { getFirestore, collection, getDocs, doc, updateDoc, arrayUnion, arrayRemove, query, where, getDoc } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import {  collection, getDocs, doc, updateDoc, arrayUnion, arrayRemove, query, where, getDoc, addDoc, deleteDoc } from 'firebase/firestore';
+import { auth,db }  from '../../firebase.config.js';
 
-const Network = () => {
+const Network = ({userId}) => {
+  userId = auth.currentUser?.uid
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('connections');
@@ -16,6 +17,7 @@ const Network = () => {
   const [invitations, setInvitations] = useState([]);
   const [following, setFollowing] = useState([]);
   const [followers, setFollowers] = useState([]);
+  const [userDetails, setUserDetails] = useState({}); // Store user details
   
   // State for modal
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -23,125 +25,126 @@ const Network = () => {
   const [profileType, setProfileType] = useState('');
 
   // Get Firebase instances
-  const db = getFirestore();
-  const auth = getAuth();
+  
 
   // Fetch network data from Firebase
   useEffect(() => {
     const fetchNetworkData = async () => {
       if (!auth.currentUser) return;
-      
+  
       setLoading(true);
       try {
         const userId = auth.currentUser.uid;
-        const userRef = doc(db, 'users', userId);
+        const userRef = doc(db, "users", userId);
         const userDoc = await getDoc(userRef);
-        
+  
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          
-          // Fetch connections
-          const connectionsData = [];
-          if (userData.connections && userData.connections.length > 0) {
-            const connectionsQuery = query(
-              collection(db, 'users'), 
-              where('uid', 'in', userData.connections)
-            );
-            const connectionsSnapshot = await getDocs(connectionsQuery);
-            connectionsSnapshot.forEach(doc => {
-              connectionsData.push({ id: doc.id, ...doc.data() });
-            });
-          }
-          setConnections(connectionsData);
-          
-          // Fetch invitations
-          const invitationsData = [];
-          if (userData.invitations && userData.invitations.length > 0) {
-            const invitationsQuery = query(
-              collection(db, 'users'), 
-              where('uid', 'in', userData.invitations)
-            );
-            const invitationsSnapshot = await getDocs(invitationsQuery);
-            invitationsSnapshot.forEach(doc => {
-              invitationsData.push({ id: doc.id, ...doc.data() });
-            });
-          }
+  
+          // Fetch connections (user1 or user2 matching userId)
+          const u1 = query(collection(db, "connections"), where("user1", "==", userId));
+          const u2 = query(collection(db, "connections"), where("user2", "==", userId));
+  
+          const [conn1, conn2] = await Promise.all([getDocs(u1), getDocs(u2)]);
+          const allConnections = [...conn1.docs, ...conn2.docs].map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+  
+          setConnections(allConnections);
+  
+          // Fetch pending connection requests
+          const q = query(
+            collection(db, "requests"),
+            where("receiverId", "==", userId),
+            where("status", "==", "pending")
+          );
+          const requestDocs = await getDocs(q);
+          const invitationsData = requestDocs.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
           setInvitations(invitationsData);
-          
-          // Fetch following
-          const followingData = [];
-          if (userData.following && userData.following.length > 0) {
-            const followingQuery = query(
-              collection(db, 'users'), 
-              where('uid', 'in', userData.following)
-            );
+  
+          // Fetch following users
+          let followingData = [];
+          if (userData.following?.length > 0) {
+            const followingQuery = query(collection(db, "users"), where("uid", "in", userData.following));
             const followingSnapshot = await getDocs(followingQuery);
-            followingSnapshot.forEach(doc => {
-              followingData.push({ id: doc.id, ...doc.data() });
-            });
+            followingData = followingSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
           }
           setFollowing(followingData);
-          
+  
           // Fetch followers
-          const followersData = [];
-          if (userData.followers && userData.followers.length > 0) {
-            const followersQuery = query(
-              collection(db, 'users'), 
-              where('uid', 'in', userData.followers)
-            );
+          let followersData = [];
+          if (userData.followers?.length > 0) {
+            const followersQuery = query(collection(db, "users"), where("uid", "in", userData.followers));
             const followersSnapshot = await getDocs(followersQuery);
-            followersSnapshot.forEach(doc => {
-              followersData.push({ id: doc.id, ...doc.data() });
-            });
+            followersData = followersSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
           }
           setFollowers(followersData);
         }
-        
+  
         setError(null);
       } catch (err) {
-        console.error('Error fetching network data:', err);
-        setError('Failed to load network data. Please try again later.');
+        console.error("Error fetching network data:", err);
+        setError("Failed to load network data. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchNetworkData();
-  }, [auth.currentUser, db]);
+  }, [auth.currentUser, db]); // Removed `connections` to prevent infinite re-renders
+  
+  useEffect(() => {
+    const fetchUserDetails = async () => {
+      if (connections.length === 0) return;
+  
+      const userInfo = {};
+      const userPromises = connections.map(async (conn) => {
+        const connectedUserId = conn.user1 === auth.currentUser?.uid ? conn.user2 : conn.user1;
+        if (!userInfo[connectedUserId]) {
+          const userRef = doc(db, "users", connectedUserId);
+          const userSnap = await getDoc(userRef);
+          if (userSnap.exists()) {
+            userInfo[connectedUserId] = { id: connectedUserId, ...userSnap.data() };
+          }
+        }
+      });
+  
+      await Promise.all(userPromises);
+      setUserDetails(userInfo);
+    };
+  
+    fetchUserDetails();
+  }, [connections]); // Separate effect for user details fetching
+  
 
-  // Function to handle accepting an invitation
-  const handleAcceptInvitation = async (invitationId) => {
-    if (!auth.currentUser) return;
-    
+
+  
+  //handlesInvitation acceptance 
+  const handleInvitationAcceptance = async (requestId,receiverId, senderId, accept) => {
     try {
-      const userId = auth.currentUser.uid;
-      const userRef = doc(db, 'users', userId);
-      
-      // Add to connections and remove from invitations
-      await updateDoc(userRef, {
-        connections: arrayUnion(invitationId),
-        invitations: arrayRemove(invitationId)
-      });
-      
-      // Update the other user's connections
-      const otherUserRef = doc(db, 'users', invitationId);
-      await updateDoc(otherUserRef, {
-        connections: arrayUnion(userId)
-      });
-      
-      // Update local state
-      const invitation = invitations.find(inv => inv.id === invitationId);
-      if (invitation) {
-        setConnections(prev => [...prev, invitation]);
-        setInvitations(prev => prev.filter(inv => inv.id !== invitationId));
+      if (accept) {
+        // Create a connection in "connections" collection
+        await addDoc(collection(db, "connections"), {
+          user1: receiverId,
+          user2: senderId,
+          connectedAt: new Date().toISOString(),
+        });
       }
-    } catch (err) {
-      console.error('Error accepting invitation:', err);
-      setError('Failed to accept invitation. Please try again.');
+
+      // Remove the request from "requests" collection
+      await deleteDoc(doc(db, "requests", requestId));
+
+      // Remove from local state
+      setInvitations(invitations.filter((req) => req.id !== requestId));
+    } catch (error) {
+      console.error("Error handling request:", error);
     }
   };
 
-  // Function to handle ignoring an invitation
   const handleIgnoreInvitation = async (invitationId) => {
     if (!auth.currentUser) return;
     
@@ -250,7 +253,7 @@ const Network = () => {
       <div className="invitation-actions">
         <button 
           className="accept-btn"
-          onClick={() => handleAcceptInvitation(invitation.id)}
+          onClick={() => handleInvitationAcceptance(invitation.id, invitation.receiverId,invitation.senderId, true)}
         >
           Accept
         </button>
@@ -365,7 +368,12 @@ const Network = () => {
                 <h2 className="section-title">Your Connections</h2>
                 {connections.length > 0 ? (
                   <div className="connections-grid">
-                    {connections.map(connection => renderUserCard(connection, 'connection'))}
+                    {connections.map((conn) => {
+                        const connectedUserId = conn.user1 === userId ? conn.user2 : conn.user1;
+                        const user = userDetails[connectedUserId]; // Get full user details
+                        console.log(user);
+                        return user ? renderUserCard(user, "connection") : <p key={connectedUserId}>Loading...</p>;
+                      })}
                   </div>
                 ) : (
                   <div className="empty-state">No connections yet</div>

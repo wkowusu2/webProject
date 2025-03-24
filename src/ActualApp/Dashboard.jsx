@@ -33,7 +33,7 @@ import { signOut } from "firebase/auth";
 import { auth } from "../../firebase.config";
  console.log("dashboard")
 
-const Dashboard = () => {
+const Dashboard = ({userId}) => {
   const [activeTab, setActiveTab] = useState("home");
   const [selectedWeek, setSelectedWeek] = useState("Weeks");
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -139,7 +139,7 @@ const Dashboard = () => {
       case "documents":
         return <Documents initialSection="appointments" />;
       case "network":
-        return <Network />;
+        return <Network userId />;
       case "messages":
         return <Messages />;
       default:
