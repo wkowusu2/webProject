@@ -10,6 +10,8 @@ import {
   AiOutlineDownload,
   AiOutlineEye
 } from 'react-icons/ai';
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db, auth } from "../../firebase.config";
 import './PatientSummary.css';
 
 const PatientSummary = () => {
@@ -105,17 +107,38 @@ const PatientSummary = () => {
   };
 
   // Add this function to handle email submission
-  const handleSendEmail = (e) => {
+  const handleSendEmail = async (e) => {
     e.preventDefault();
-    // Add your email sending logic here
-    console.log('Sending email:', emailDetails);
-    setIsEmailModalOpen(false);
-    setShowSuccessMessage(true);
     
-    // Hide success message after 3 seconds
-    setTimeout(() => {
-      setShowSuccessMessage(false);
-    }, 3000);
+    try {
+      // Add report to Firestore
+      await addDoc(collection(db, "reports"), {
+        senderEmail: auth.currentUser.email,
+        receiverEmail: emailDetails.recipientEmail,
+        subject: emailDetails.subject,
+        content: reportText, // Your report content
+        prescriptionDetails: prescriptionText, // Your prescription content
+        timestamp: serverTimestamp(),
+      });
+
+      setIsEmailModalOpen(false);
+      setShowSuccessMessage(true);
+      
+      // Reset form
+      setEmailDetails({
+        recipientEmail: '',
+        subject: '',
+        message: ''
+      });
+
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Error sending report:", error);
+      // Handle error appropriately
+    }
   };
 
   return (

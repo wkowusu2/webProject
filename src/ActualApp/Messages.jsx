@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { collection, query, where, onSnapshot, orderBy, addDoc, serverTimestamp, or, getDoc,doc } from "firebase/firestore";
 import { db, auth } from "../../firebase.config";
 import { onAuthStateChanged } from "firebase/auth";
+import { AiOutlineSearch, AiOutlineSend } from "react-icons/ai";
+import './Messages.css';
 
 const Messages = () => {
   const [connections, setConnections] = useState([]); // Connected users
@@ -9,6 +11,8 @@ const Messages = () => {
   const [chats, setChats] = useState([]); // Chat history
   const [currentUser, setCurrentUser] = useState(null);
   const [newMessage, setNewMessage] = useState(""); // New message input
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredConnections, setFilteredConnections] = useState([]);
 
   // Get the authenticated user
   useEffect(() => {
@@ -81,6 +85,16 @@ const Messages = () => {
     return () => unsubscribe();
   }, [selectedUser, currentUser]);
 
+  // Handle search
+  useEffect(() => {
+    if (!connections) return;
+    
+    const filtered = connections.filter(conn => 
+      conn.fullName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredConnections(filtered);
+  }, [searchTerm, connections]);
+
   // Send a message
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
@@ -97,82 +111,103 @@ const Messages = () => {
   };
 
   return (
-    <div style={{ display: "flex", height: "100vh" }}>
-      {/* Left Sidebar */}
-      <div style={{ width: "30%", borderRight: "1px solid #ccc", padding: "10px" }}>
+    <div className="messages-page-container">
+      {/* Header */}
+      <div className="messages-header">
         <h2>Messages</h2>
-
-        {/* List of Connected Users */}
-        <h4>Connected Users</h4>
-        {connections.length === 0 ? (
-          <p>No connections yet</p>
-        ) : (
-          connections.map((conn) => (
-            <div
-              key={conn.userId}
-              style={{
-                padding: "10px",
-                borderBottom: "1px solid #ddd",
-                cursor: "pointer",
-                backgroundColor: selectedUser === conn.userId ? "#f0f0f0" : "transparent",
-              }}
-              onClick={() => setSelectedUser(conn.userId)}
-            >
-              <p><strong>{conn.fullName}</strong></p>
-            </div>
-          ))
-        )}
       </div>
 
-      {/* Chat Window */}
-      <div style={{ flex: 1, padding: "20px", display: "flex", flexDirection: "column" }}>
-        {selectedUser ? (
-          <>
-            {/* Chat Messages */}
-            <div style={{ flex: 1, overflowY: "auto", borderBottom: "1px solid #ddd", paddingBottom: "10px" }}>
-              {chats.length > 0 ? (
-                chats.map((chat) => (
-                  <div
-                    key={chat.id}
-                    style={{
-                      textAlign: chat.sender === currentUser.uid ? "right" : "left",
-                      marginBottom: "10px",
-                    }}
-                  >
-                    <p
-                      style={{
-                        display: "inline-block",
-                        padding: "8px",
-                        borderRadius: "10px",
-                        backgroundColor: chat.sender === currentUser.uid ? "#dcf8c6" : "#f1f1f1",
-                      }}
-                    >
-                      {chat.message}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <p style={{ textAlign: "center", color: "#888" }}>Start a chat</p>
-              )}
-            </div>
+      <div className="messages-content">
+        {/* Left Sidebar */}
+        <div className="messages-sidebar">
+          {/* Search Bar */}
+          <div className="messages-search">
+            <AiOutlineSearch className="search-icon" />
+            <input 
+              type="text" 
+              placeholder="Search messages..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
 
-            {/* Input Field for Sending Messages */}
-            <div style={{ display: "flex", marginTop: "10px" }}>
-              <input
-                type="text"
-                placeholder="Type a message..."
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                style={{ flex: 1, padding: "8px" }}
-              />
-              <button onClick={sendMessage} style={{ marginLeft: "10px", padding: "8px 15px", cursor: "pointer" }}>
-               Send
-              </button>
+          {/* Connected Users List */}
+          <div className="messages-list">
+            {filteredConnections.length === 0 ? (
+              <p className="no-messages">
+                {searchTerm ? 'No matching conversations' : 'No conversations yet'}
+              </p>
+            ) : (
+              filteredConnections.map((conn) => (
+                <div
+                  key={conn.userId}
+                  className={`message-item ${selectedUser === conn.userId ? 'active' : ''}`}
+                  onClick={() => setSelectedUser(conn.userId)}
+                >
+                  <img 
+                    src={conn.profilePicture || "https://randomuser.me/api/portraits/men/85.jpg"} 
+                    alt={conn.fullName} 
+                    className="message-avatar"
+                  />
+                  <div className="message-info">
+                    <h4 className="message-sender">{conn.fullName}</h4>
+                    <p className="message-text">Click to start chatting</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Chat Window */}
+        <div className="chat-window">
+          {selectedUser ? (
+            <>
+              {/* Chat Messages */}
+              <div className="chat-messages">
+                {chats.length > 0 ? (
+                  chats.map((chat) => (
+                    <div
+                      key={chat.id}
+                      className={`chat-message ${chat.sender === currentUser.uid ? 'sent' : 'received'}`}
+                    >
+                      <div className="chat-message-content">
+                        {chat.message}
+                      </div>
+                      <span className="message-time">
+                        {chat.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="no-messages">Start a chat</p>
+                )}
+              </div>
+
+              {/* Message Input */}
+              <div className="message-input-wrapper">
+                <input
+                  type="text"
+                  className="message-input"
+                  placeholder="Type a message..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                />
+                <button 
+                  className="send-message-btn"
+                  onClick={sendMessage}
+                >
+                  <AiOutlineSend />
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="select-chat">
+              <p>Select a user to start chatting</p>
             </div>
-          </>
-        ) : (
-          <p>Select a user to start chatting</p>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

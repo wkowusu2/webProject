@@ -209,11 +209,28 @@
 }
 
 .invitation-card {
-  background-color: white;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: relative;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.invitation-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.invitation-status {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.pending-status {
+  color: #f5a623;
+  font-weight: 500;
 }
 
 .user-card {
@@ -294,6 +311,20 @@
 
 .follow-btn:hover {
   background-color: #0069d9;
+}
+
+.follow-btn.pending {
+  background-color: #f5a623;
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+
+.follow-btn.pending:hover {
+  background-color: #f5a623;
+}
+
+.follow-btn svg {
+  font-size: 14px;
 }
 
 .unfollow-btn {
@@ -437,4 +468,37 @@
 
 .follow-btn:hover {
   background-color: #3a7b56;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 8px;
+}
+
+.status-badge.incoming {
+  background-color: #4b9b6e;
+  color: white;
+}
+
+.status-badge.outgoing {
+  background-color: #f5a623;
+  color: white;
+}
+
+.cancel-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.cancel-btn:hover {
+  background-color: #c82333;
 }
