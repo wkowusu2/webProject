@@ -32,72 +32,81 @@ const Network = ({userId}) => {
   // Fetch network data from Firebase
   useEffect(() => {
     const fetchNetworkData = async () => {
-      if (!auth.currentUser) return;
-  
-      setLoading(true);
-      try {
-        const userId = auth.currentUser.uid;
-        const userRef = doc(db, "users", userId);
-        const userDoc = await getDoc(userRef);
-  
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-  
-          // Fetch connections (user1 or user2 matching userId)
-          const u1 = query(collection(db, "connections"), where("user1", "==", userId));
-          const u2 = query(collection(db, "connections"), where("user2", "==", userId));
-  
-          const [conn1, conn2] = await Promise.all([getDocs(u1), getDocs(u2)]);
-          const allConnections = [...conn1.docs, ...conn2.docs].map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-  
-          setConnections(allConnections);
-  
-          // Fetch pending connection requests
-          const q = query(
-            collection(db, "requests"),
-            where("receiverId", "==", userId),
-            where("status", "==", "pending")
-          );
-          const requestDocs = await getDocs(q);
-          const invitationsData = requestDocs.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setInvitations(invitationsData);
-  
-          // Fetch following users
-          let followingData = [];
-          if (userData.following?.length > 0) {
-            const followingQuery = query(collection(db, "users"), where("uid", "in", userData.following));
-            const followingSnapshot = await getDocs(followingQuery);
-            followingData = followingSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-          }
-          setFollowing(followingData);
-  
-          // Fetch followers
-          let followersData = [];
-          if (userData.followers?.length > 0) {
-            const followersQuery = query(collection(db, "users"), where("uid", "in", userData.followers));
-            const followersSnapshot = await getDocs(followersQuery);
-            followersData = followersSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-          }
-          setFollowers(followersData);
+        if (!auth.currentUser) return;
+
+        setLoading(true);
+        try { 
+            const userId = auth.currentUser.uid;
+            const userRef = doc(db, "users", userId);
+            const userDoc = await getDoc(userRef);
+        
+            if (!userDoc.exists()) return; // Exit early if user does not exist
+
+            const userData = userDoc.data(); // Now safe to use
+
+            // Fetch connections (user1 or user2 matching userId)
+            const u1 = query(collection(db, "connections"), where("user1", "==", userId));
+            const u2 = query(collection(db, "connections"), where("user2", "==", userId));
+
+            const [conn1, conn2] = await Promise.all([getDocs(u1), getDocs(u2)]);
+            const allConnections = [...conn1.docs, ...conn2.docs].map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
+
+            setConnections(allConnections);
+
+            // Fetch pending connection requests
+            const q = query(
+                collection(db, "requests"),
+                where("receiverId", "==", userId),
+                where("status", "==", "pending")
+            );
+            const requestDocs = await getDocs(q);
+            const invitationsData = await Promise.all(
+                requestDocs.docs.map(async (docSnap) => {
+                    const requestData = docSnap.data();
+                    const senderRef = doc(db, "users", requestData.senderId);
+                    const senderDoc = await getDoc(senderRef);
+                    return {
+                        id: docSnap.id,
+                        ...requestData,
+                        senderDetails: senderDoc.exists() ? senderDoc.data() : null,
+                    };
+                })
+            );
+            setInvitations(invitationsData);
+
+            // Fetch following users
+            let followingData = [];
+            if (userData.following?.length > 0) {
+                const followingQuery = query(collection(db, "users"), where("uid", "in", userData.following));
+                const followingSnapshot = await getDocs(followingQuery);
+                followingData = followingSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+            }
+            setFollowing(followingData);
+
+            // Fetch followers
+            let followersData = [];
+            if (userData.followers?.length > 0) {
+                const followersQuery = query(collection(db, "users"), where("uid", "in", userData.followers));
+                const followersSnapshot = await getDocs(followersQuery);
+                followersData = followersSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+            }
+            setFollowers(followersData);
+
+            setError(null);
+        } catch (err) {
+            console.error("Error fetching network data:", err);
+            setError("Failed to load network data. Please try again later.");
+        } finally {
+            setLoading(false);
         }
-  
-        setError(null);
-      } catch (err) {
-        console.error("Error fetching network data:", err);
-        setError("Failed to load network data. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
     };
-  
+
     fetchNetworkData();
-  }, [auth.currentUser, db]); // Removed `connections` to prevent infinite re-renders
+}, [auth.currentUser, db]);  
+ // Removed `connections` to prevent infinite re-renders
   
   useEffect(() => {
     const fetchUserDetails = async () => {
@@ -301,14 +310,14 @@ const Network = ({userId}) => {
     <div className="invitation-card" key={invitation.id}>
       <img
         src={invitation.photoURL || 'https://via.placeholder.com/80'}
-        alt={invitation.displayName}
+        alt={invitation.fullName}
         className="invitation-avatar"
       />
       <div className="invitation-info">
-        <h3>{invitation.displayName}</h3>
-        <p>{invitation.title || 'Healthcare Professional'}</p>
+        <h3>{invitation.senderDetails.fullName}</h3>{console.log(invitation.senderDetails)}
+        <p>{invitation.senderDetails.specialization || 'Healthcare Professional'}</p>
         <div className="invitation-location">
-          <FaMapMarkerAlt /> {invitation.location || 'Location not specified'}
+          <FaMapMarkerAlt /> {invitation.senderDetails.institution || 'Location not specified'}
         </div>
       </div>
       <div className="invitation-actions">
