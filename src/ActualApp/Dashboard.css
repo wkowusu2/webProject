@@ -1130,15 +1130,9 @@
   min-width: 120px;
 }
 
-.logo {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: white;
-}
-
 .search-bar {
   position: relative;
-  width: 250px;
+  width: 500px;
   margin: 0 auto;
 }
 

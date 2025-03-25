@@ -19,6 +19,13 @@ const PatientSummary = () => {
   const [recordingTime, setRecordingTime] = useState(0);
   const [waveformBars, setWaveformBars] = useState([]);
   const [selectedDocument, setSelectedDocument] = useState(null);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [emailDetails, setEmailDetails] = useState({
+    recipientEmail: '',
+    subject: '',
+    message: ''
+  });
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   // Handle report text change
   const handleReportChange = (e) => {
@@ -81,6 +88,36 @@ const PatientSummary = () => {
     setSelectedDocument(null);
   };
 
+  // Add this function inside PatientSummary component
+  const handleDocumentUpload = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.doc,.docx,.jpg,.png';
+    input.multiple = true;
+    input.click();
+    
+    input.onchange = (e) => {
+      const files = Array.from(e.target.files);
+      // Handle the uploaded files here
+      console.log('Uploaded files:', files);
+      // Add your file upload logic here
+    };
+  };
+
+  // Add this function to handle email submission
+  const handleSendEmail = (e) => {
+    e.preventDefault();
+    // Add your email sending logic here
+    console.log('Sending email:', emailDetails);
+    setIsEmailModalOpen(false);
+    setShowSuccessMessage(true);
+    
+    // Hide success message after 3 seconds
+    setTimeout(() => {
+      setShowSuccessMessage(false);
+    }, 3000);
+  };
+
   return (
     <div className="patient-summary-container">
       <div className="patient-summary-left">
@@ -128,37 +165,9 @@ const PatientSummary = () => {
           </div>
         </div>
 
-        <div className="voice-memo-section">
-          <h2>Voice Memo</h2>
-          <div className="voice-recorder">
-            <button 
-              className="record-button"
-              onClick={toggleRecording}
-            >
-              {isRecording ? <AiOutlinePauseCircle /> : <AiOutlinePlayCircle />}
-            </button>
-            
-            <div className="waveform">
-              {waveformBars.map((height, index) => (
-                <div 
-                  key={index} 
-                  className="waveform-bar" 
-                  style={{ height: `${height}px` }}
-                />
-              ))}
-            </div>
-            
-            <div className="recording-time">
-              {formatTime(recordingTime)}
-            </div>
-            
-            <button className="delete-button">
-              <AiOutlineDelete />
-            </button>
-          </div>
-        </div>
-
-        <button className="send-button">Send</button>
+        <button className="send-button" onClick={() => setIsEmailModalOpen(true)}>
+          Send to
+        </button>
       </div>
 
       <div className="patient-summary-right">
@@ -166,15 +175,16 @@ const PatientSummary = () => {
           <h3>Patient Card</h3>
           
           <div className="patient-info">
-            <div className="patient-avatar">
+            <div className="patient-header">
               <img 
                 src="https://randomuser.me/api/portraits/women/32.jpg" 
                 alt="Jane Deer" 
+                className="patient-avatar" 
               />
-            </div>
-            <div className="patient-details">
-              <h4 className="patient-name">Jane Deer</h4>
-              <p className="patient-demographics">32 years, Female</p>
+              <div className="patient-text">
+                <h4 className="patient-name">Jane Deer</h4>
+                <p className="patient-demographics">32 years, Female</p>
+              </div>
             </div>
           </div>
           
@@ -188,38 +198,9 @@ const PatientSummary = () => {
           
           <div className="document-items">
             <h3>Documents</h3>
-            <div 
-              className="document-item"
-              onClick={() => handleDocumentClick('xray')}
-            >
-              <AiOutlineFile className="document-icon" />
-              <label>X-Ray</label>
-              <div className="document-actions">
-                <AiOutlineEye className="document-action-icon" title="View" />
-                <AiOutlineDownload className="document-action-icon" title="Download" />
-              </div>
-            </div>
-            <div 
-              className="document-item"
-              onClick={() => handleDocumentClick('history')}
-            >
-              <AiOutlineFile className="document-icon" />
-              <label>History of Disease</label>
-              <div className="document-actions">
-                <AiOutlineEye className="document-action-icon" title="View" />
-                <AiOutlineDownload className="document-action-icon" title="Download" />
-              </div>
-            </div>
-            <div 
-              className="document-item"
-              onClick={() => handleDocumentClick('analysis')}
-            >
-              <AiOutlineFile className="document-icon" />
-              <label>Analysis</label>
-              <div className="document-actions">
-                <AiOutlineEye className="document-action-icon" title="View" />
-                <AiOutlineDownload className="document-action-icon" title="Download" />
-              </div>
+            <div className="document-upload-icon" onClick={handleDocumentUpload}>
+              <AiOutlineFile className="doc-icon" />
+              <span>Upload Documents</span>
             </div>
           </div>
         </div>
@@ -270,8 +251,74 @@ const PatientSummary = () => {
           </div>
         </div>
       )}
+
+      {/* Add this email modal */}
+      {isEmailModalOpen && (
+        <div className="email-modal-overlay">
+          <div className="email-modal">
+            <div className="email-modal-header">
+              <h3>Send Information</h3>
+              <button 
+                className="close-modal-btn"
+                onClick={() => setIsEmailModalOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+            <form onSubmit={handleSendEmail} className="email-form">
+              <div className="form-group">
+                <label htmlFor="recipientEmail">Recipient Email</label>
+                <input
+                  type="email"
+                  id="recipientEmail"
+                  value={emailDetails.recipientEmail}
+                  onChange={(e) => setEmailDetails({
+                    ...emailDetails,
+                    recipientEmail: e.target.value
+                  })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="subject">Subject</label>
+                <input
+                  type="text"
+                  id="subject"
+                  value={emailDetails.subject}
+                  onChange={(e) => setEmailDetails({
+                    ...emailDetails,
+                    subject: e.target.value
+                  })}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="message">Additional Message</label>
+                <textarea
+                  id="message"
+                  value={emailDetails.message}
+                  onChange={(e) => setEmailDetails({
+                    ...emailDetails,
+                    message: e.target.value
+                  })}
+                />
+              </div>
+              <button type="submit" className="send-email-btn">
+                Send
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Success Message */}
+      {showSuccessMessage && (
+        <div className="success-message">
+          Information sent successfully!
+        </div>
+      )}
     </div>
   );
 };
 
-export default PatientSummary; 
+export default PatientSummary;
