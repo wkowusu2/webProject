@@ -1,8 +1,6 @@
 .patient-summary-container {
   display: flex;
   gap: 2rem;
-  background-color: #e8f5e9;
-  padding: 2rem;
   border-radius: 10px;
   font-family: 'Roboto', sans-serif;
   width: 100%;
@@ -23,8 +21,7 @@
 }
 
 .report-section,
-.prescription-section,
-.voice-memo-section {
+.prescription-section {
   background-color: white;
   border-radius: 10px;
   padding: 1.5rem;
@@ -93,48 +90,6 @@ h2 {
   background-color: #4b9b6e;
 }
 
-.voice-recorder {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: #f5f5f5;
-  padding: 0.75rem;
-  border-radius: 8px;
-}
-
-.play-button,
-.record-button,
-.delete-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.waveform {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  height: 40px;
-}
-
-.waveform-bar {
-  width: 3px;
-  background-color: #4b9b6e;
-  border-radius: 1px;
-}
-
-.recording-time {
-  font-size: 0.8rem;
-  color: #666;
-  min-width: 40px;
-  text-align: center;
-}
-
 .send-button {
   align-self: flex-end;
   padding: 0.75rem 2rem;
@@ -145,7 +100,14 @@ h2 {
   cursor: pointer;
   font-size: 1rem;
   font-weight: 500;
-  margin-top: 1rem;
+  margin-top: 3rem;     /* Increased from 1rem */
+  width: 100%;          /* Added to make button full width */
+  text-align: center;   /* Center the text */
+  transition: background-color 0.2s ease;
+}
+
+.send-button:hover {
+  background-color: #3a8a5d;
 }
 
 .patient-card {
@@ -170,11 +132,13 @@ h2 {
 }
 
 .patient-avatar {
-  width: 70px;
-  height: 70px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
+  object-fit: cover;
+  border: 2px solid #4b9b6e;
 }
 
 .patient-avatar img {
@@ -186,6 +150,7 @@ h2 {
 .patient-details {
   flex: 1;
   padding: 0.25rem 0;
+  padding-left: 60px; /* This aligns with the image (48px + 12px gap) */
 }
 
 .patient-name {
@@ -194,6 +159,10 @@ h2 {
   color: #333;
   margin: 0 0 0.5rem 0;
   line-height: 1.2;
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2e7d5c;
 }
 
 .patient-demographics {
@@ -201,6 +170,9 @@ h2 {
   color: #666;
   margin: 0;
   line-height: 1.2;
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
 }
 
 .visit-purpose {
@@ -398,6 +370,159 @@ h2 {
   background-color: #3d8a5f;
 }
 
+.upload-document-container {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+.upload-document-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background: #4b9b6e;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+}
+
+.upload-document-btn:hover {
+  background: #3a8a5d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(75, 155, 110, 0.2);
+}
+
+.upload-icon {
+  font-size: 1.5rem;
+}
+
+.document-upload-icon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  color: #4b9b6e;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.document-upload-icon:hover {
+  color: #3a8a5d;
+  transform: translateY(-1px);
+}
+
+.doc-icon {
+  font-size: 24px;
+}
+
+.email-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.email-modal {
+  background: white;
+  border-radius: 12px;
+  width: 500px;
+  max-width: 90vw;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.email-modal-header {
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.close-modal-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.email-form {
+  padding: 20px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.form-group textarea {
+  height: 100px;
+  resize: vertical;
+}
+
+.send-email-btn {
+  width: 100%;
+  padding: 12px 16px 12px 16px;
+  background: #4b9b6e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.send-email-btn:hover {
+  background: #3a8a5d;
+}
+
+.success-message {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #4b9b6e;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 6px;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 @media (max-width: 768px) {
   .patient-summary-container {
     flex-direction: column;
@@ -407,4 +532,38 @@ h2 {
   .patient-summary-right {
     max-width: 100%;
   }
-} 
+}
+
+.patient-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.patient-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #4b9b6e;
+  object-fit: cover;
+}
+
+.patient-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.patient-name {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #2e7d5c;
+}
+
+.patient-demographics {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+}
