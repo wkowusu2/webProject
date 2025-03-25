@@ -268,6 +268,7 @@ const Network = ({userId}) => {
   // Function to open profile modal
   const openProfileModal = (profile, type) => {
     setSelectedProfile(profile);
+    console.log("profile: " + profile);
     setProfileType(type);
     setIsProfileModalOpen(true);
   };
@@ -315,7 +316,7 @@ const Network = ({userId}) => {
     <div 
       className="user-card" 
       key={user.id}
-      onClick={() => openProfileModal(user, type)}
+      onClick={() => openProfileModal(user, type)} 
     >
       <img
         src={user.photoURL || 'https://via.placeholder.com/80'}
@@ -326,7 +327,7 @@ const Network = ({userId}) => {
         <h3>{user.fullName}</h3> {console.log("user: ",user)}
         <p>{user.specialization || 'Healthcare Professional'}</p>
         <div className="user-location">
-          <FaMapMarkerAlt /> {user.institution  || 'Institution not specified'} {console.log("institution: ",user.institution)}
+          <FaMapMarkerAlt /> {user.institution  || 'Institution not specified'} 
         </div>
       </div>
       {type === 'following' && (
