@@ -6,7 +6,8 @@ import { useLocation } from 'react-router-dom';
 import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { auth, db, googleProvider } from '../../firebase.config';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-
+import { FcGoogle } from 'react-icons/fc';
+import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 
 const DoctorSignup = () => {
   const location = useLocation();
@@ -17,7 +18,6 @@ const DoctorSignup = () => {
     email: '',
     phone: '',
     specialization: '',
-    licenseNumber: '',
     hospital: '',
     experience: '',
     password: '',
@@ -26,6 +26,7 @@ const DoctorSignup = () => {
   
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   
@@ -74,11 +75,6 @@ const DoctorSignup = () => {
       newErrors.specialization = 'Specialization is required';
     }
     
-    // Validate license number
-    if (!formData.licenseNumber.trim()) {
-      newErrors.licenseNumber = 'Medical license number is required';
-    }
-    
     // Validate password
     if (!formData.password) {
       newErrors.password = 'Password is required';
@@ -94,12 +90,11 @@ const DoctorSignup = () => {
     return newErrors;
   };
 
-  const signUpWithEmail = async (email, password, firstName, lastName, phone, licenseNumber, specialization, hospital, experience) => {
+  const signUpWithEmail = async (email, password, firstName, lastName, phone, specialization, hospital, experience) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      console.log(user);
-      // Store user details in Firestore
+      
       const userWithId = doc(db, "users", user.uid); 
       const docRef = await setDoc(userWithId, {
         uid: user.uid,
@@ -107,15 +102,12 @@ const DoctorSignup = () => {
         firstName,
         lastName,
         specialization,
-        licenseNumber,
         createdAt: new Date(),
         phoneNo: phone,
         role: selectedOption,
         hospital,
         experience
-      } )
-      // console.log("Stored the details of ", docRef.id); 
-      // console.log(docRef)
+      });
       
       console.log("User signed up and stored in Firestore!");
       navigate("/dashboard");
@@ -138,7 +130,16 @@ const DoctorSignup = () => {
     try {
 
       // Register the user
-      signUpWithEmail(formData.email, formData.password, formData.firstName, formData.lastName, formData.phone, formData.licenseNumber, formData.specialization, formData.hospital, formData.experience); 
+      signUpWithEmail(
+        formData.email, 
+        formData.password, 
+        formData.firstName, 
+        formData.lastName, 
+        formData.phone, 
+        formData.specialization, 
+        formData.hospital, 
+        formData.experience
+      ); 
 
       // Redirect to dashboard
     } catch (error) {
@@ -257,19 +258,6 @@ const DoctorSignup = () => {
                   />
                   {errors.specialization && <span className="error-message">{errors.specialization}</span>}
                 </div>
-                
-                <div className="form-group">
-                  <label htmlFor="licenseNumber">Medical License Number</label>
-                  <input 
-                    type="text" 
-                    id="licenseNumber" 
-                    name="licenseNumber" 
-                    value={formData.licenseNumber}
-                    onChange={handleChange}
-                    className={errors.licenseNumber ? 'error' : ''}
-                  />
-                  {errors.licenseNumber && <span className="error-message">{errors.licenseNumber}</span>}
-                </div>
               </div>
               
               <div className="form-column">
@@ -307,27 +295,34 @@ const DoctorSignup = () => {
                       onChange={handleChange}
                       className={errors.password ? 'error' : ''}
                     />
-                    <button 
-                      type="button" 
-                      className="toggle-password"
+                    <span 
+                      className="password-toggle-icon"
                       onClick={() => setShowPassword(!showPassword)}
                     >
-                      {showPassword ? 'Hide' : 'Show'}
-                    </button>
+                      {showPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
+                    </span>
                   </div>
                   {errors.password && <span className="error-message">{errors.password}</span>}
                 </div>
                 
                 <div className="form-group">
                   <label htmlFor="confirmPassword">Confirm Password</label>
-                  <input 
-                    type="password" 
-                    id="confirmPassword" 
-                    name="confirmPassword" 
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    className={errors.confirmPassword ? 'error' : ''}
-                  />
+                  <div className="password-input-container">
+                    <input 
+                      type={showConfirmPassword ? "text" : "password"} 
+                      id="confirmPassword" 
+                      name="confirmPassword" 
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className={errors.confirmPassword ? 'error' : ''}
+                    />
+                    <span 
+                      className="password-toggle-icon"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
+                    </span>
+                  </div>
                   {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
                 </div>
               </div>
@@ -341,7 +336,14 @@ const DoctorSignup = () => {
               >
                 {loading ? 'Creating Account...' : 'Create Account'}
               </button>
-              <button onClick={signInWithGoogle}>Google sign up</button>
+              <button 
+                type="button"
+                className="google-signup-button" 
+                onClick={signInWithGoogle}
+              >
+                <FcGoogle className="google-icon" />
+                <span>Continue with Google</span>
+              </button>
               <p className="login-link">
                 Already have an account? <Link to="/login">Log in</Link>
               </p>
@@ -353,4 +355,4 @@ const DoctorSignup = () => {
   );
 };
 
-export default DoctorSignup; 
+export default DoctorSignup;

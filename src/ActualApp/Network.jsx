@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './Network.css';
-import { FaUserPlus, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaUserPlus, FaMapMarkerAlt, FaClock } from 'react-icons/fa';
 import ProfileModal from './ProfileModal';
-import {  collection, getDocs, doc, updateDoc, arrayUnion, arrayRemove, query, where, getDoc, addDoc, deleteDoc } from 'firebase/firestore';
+import {  collection, getDocs, doc, updateDoc, arrayUnion, arrayRemove, query, where, getDoc, addDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { auth,db }  from '../../firebase.config.js';
 
 const Network = ({userId}) => {
@@ -19,7 +19,8 @@ const Network = ({userId}) => {
   const [followers, setFollowers] = useState([]);
   const [userDetails, setUserDetails] = useState({}); // Store user details
   const [unconnectedUserList, setUnconnectedUserList] = useState([]);
-  
+  const [pendingRequests, setPendingRequests] = useState([]);
+
   // State for modal
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState(null);
@@ -162,6 +163,22 @@ const Network = ({userId}) => {
     fetchConnections();
   }, [auth.currentUser]);
   
+  useEffect(() => {
+    if (!userId) return;
+    
+    const q = query(
+      collection(db, "requests"),
+      where("senderId", "==", userId),
+      where("status", "==", "pending")
+    );
+  
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const requests = snapshot.docs.map(doc => doc.data().receiverId);
+      setPendingRequests(requests);
+    });
+  
+    return () => unsubscribe();
+  }, [userId]);
 
 
   
@@ -342,13 +359,24 @@ const Network = ({userId}) => {
       )}
       {type === 'unconnected users' && (
         <button 
-          className="follow-btn"
+          className={`follow-btn ${pendingRequests.includes(user.id) ? 'pending' : ''}`}
           onClick={(e) => {
             e.stopPropagation();
-            sendRequest(userId , user.id);
+            if (!pendingRequests.includes(user.id)) {
+              sendRequest(userId, user.id);
+            }
           }}
+          disabled={pendingRequests.includes(user.id)}
         >
-          <FaUserPlus /> Add
+          {pendingRequests.includes(user.id) ? (
+            <>
+              <FaClock /> Pending
+            </>
+          ) : (
+            <>
+              <FaUserPlus /> Add
+            </>
+          )}
         </button>
       )}
     </div>

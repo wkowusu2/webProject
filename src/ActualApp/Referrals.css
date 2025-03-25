@@ -1,6 +1,6 @@
 .referrals-container {
   background-color: #e8f5e9;
-  padding: 2rem;
+  padding: 20px;
   border-radius: 10px;
   font-family: 'Roboto', sans-serif;
   width: 100%;
@@ -20,23 +20,26 @@
 .referrals-tabs {
   display: flex;
   border-bottom: 2px solid #d0e8d5;
-  margin-bottom: 1.5rem;
+  margin-bottom: 24px;
+  gap: 20px;
 }
 
 .tab-button {
   background: none;
   border: none;
-  padding: 0.75rem 2.5rem;
-  font-size: 1.2rem;
-  color: #4b9b6e;
+  padding: 10px 24px;
+  font-size: 16px;
+  color: #666;
   cursor: pointer;
   position: relative;
   font-weight: 500;
+  border-bottom: 2px solid transparent;
 }
 
 .tab-button.active {
   color: #4b9b6e;
   font-weight: 600;
+  border-bottom-color: #4b9b6e;
 }
 
 .tab-button.active::after {
@@ -293,6 +296,39 @@
   color: white;
 }
 
+.report-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.report-content {
+  margin-bottom: 16px;
+  color: #444;
+}
+
+.report-footer {
+  display: flex;
+  justify-content: space-between;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.loading, .no-reports {
+  text-align: center;
+  color: #666;
+  padding: 24px;
+}
+
 @media (max-width: 768px) {
   .referrals-container {
     padding: 1rem;
@@ -324,4 +360,4 @@
   .status-button {
     margin: 0 0.25rem;
   }
-} 
+}
