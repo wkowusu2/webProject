@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./Documents.css";
 import Referrals from "./Referrals"; // Import the Referrals component
 import PatientSummary from "./PatientSummary"; // Import the PatientSummary component
+import Hospitals from "./Hospitals"; // Add this import
 
 const Documents = ({ initialSection }) => {
   const [activeSection, setActiveSection] = useState("appointments");
@@ -155,6 +156,8 @@ const Documents = ({ initialSection }) => {
         return <Referrals />;
       case "summary":
         return <PatientSummary />;
+      case "hospitals":
+        return <Hospitals />;
       default:
         return <div className="section-content">Select a section</div>;
     }
@@ -188,11 +191,18 @@ const Documents = ({ initialSection }) => {
           >
             Patient summary
           </div>
+          <div
+            className={`nav-item ${activeSection === "hospitals" ? "active" : ""}`}
+            onClick={() => setActiveSection("hospitals")}
+          >
+            Hospitals
+          </div>
         </nav>
       </div>
       <div className={`${activeSection === "appointments" ? "appointments-container" : ""} 
                        ${activeSection === "referral" ? "referrals-section-container" : ""} 
-                       ${activeSection === "summary" ? "patient-summary-section-container" : ""}`}>
+                       ${activeSection === "summary" ? "patient-summary-section-container" : ""}
+                       ${activeSection === "hospitals" ? "hospitals-section-container" : ""}`}>
         {renderContent()}
       </div>
     </div>

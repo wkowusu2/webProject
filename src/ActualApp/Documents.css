@@ -161,6 +161,8 @@
   gap: 1rem;
   max-height: 400px;
   overflow-y: auto;
+  margin-top: 20px;
+  gap: 16px;
 }
 
 .appointment-item {
@@ -170,6 +172,12 @@
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.appointment-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .appointment-type {
@@ -181,22 +189,35 @@
   margin-right: 1rem;
   min-width: 100px;
   text-align: center;
+  padding: 4px 12px;
+  border-radius: 16px;
 }
 
 .appointment-type.consultation {
   background-color: #2196f3;
+  background-color: #e3f2fd;
+  color: #1976d2;
 }
 
 .appointment-type.checkup {
   background-color: #4caf50;
+  background-color: #e8f5e9;
+  color: #2e7d32;
 }
 
 .appointment-type.follow-up {
   background-color: #ff9800;
+  background-color: #fff3e0;
+  color: #f57c00;
 }
 
 .appointment-type.surgery {
   background-color: #f44336;
+}
+
+.appointment-type.emergency {
+  background-color: #ffebee;
+  color: #c62828;
 }
 
 .appointment-details {
@@ -217,6 +238,8 @@
   font-weight: 600;
   color: #333;
   font-size: 0.95rem;
+  color: #666;
+  font-size: 0.9rem;
 }
 
 .appointment-time {
@@ -323,6 +346,8 @@
 .label {
   color: #666;
   font-size: 0.9rem;
+  font-weight: 500;
+  min-width: 60px;
 }
 
 .value {
@@ -362,5 +387,326 @@
 .visit-date,
 .doctor {
   font-size: 0.9rem;
+  color: #666;
+}
+
+.appointments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.add-appointment-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: #4b9b6e;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.add-appointment-btn:hover {
+  background-color: #3a8a5d;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #666;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-group textarea {
+  height: 100px;
+  resize: vertical;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.save-btn,
+.cancel-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.save-btn {
+  background-color: #4b9b6e;
+  color: white;
+  border: none;
+}
+
+.save-btn:hover {
+  background-color: #3a8a5d;
+}
+
+.save-btn:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.save-btn.loading {
+  position: relative;
+  color: transparent;
+}
+
+.save-btn.loading::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin: -8px 0 0 -8px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  border-right-color: transparent;
+  animation: rotate 0.8s linear infinite;
+}
+
+@keyframes rotate {
+  100% { transform: rotate(360deg); }
+}
+
+.cancel-btn {
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+}
+
+.cancel-btn:hover {
+  background-color: #e9ecef;
+}
+
+.no-appointments {
+  text-align: center;
+  color: #666;
+  padding: 2rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin: 1rem 0;
+  text-align: center;
+  padding: 24px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  color: #666;
+}
+
+.appointment-notes {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #666;
+  padding-top: 0.5rem;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 8px;
+}
+
+.appointment-card {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.appointment-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.appointment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.appointment-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.patient-info {
+  display: flex;
+  gap: 8px;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #4b9b6e;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.submit-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.send-report-btn {
+  padding: 10px 20px;
+  background-color: #4b9b6e;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 20px;
+}
+
+.hospitals-container {
+  padding: 24px;
+  background: #f8f9fa;
+}
+
+.hospitals-container h2 {
+  color: #2c3e50;
+  margin-bottom: 24px;
+  font-size: 1.8rem;
+}
+
+.hospitals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.hospital-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hospital-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.hospital-image {
+  height: 200px;
+  overflow: hidden;
+}
+
+.hospital-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hospital-info {
+  padding: 20px;
+}
+
+.hospital-info h3 {
+  margin: 0 0 16px;
+  color: #2c3e50;
+  font-size: 1.4rem;
+}
+
+.hospital-details {
+  margin-bottom: 16px;
+}
+
+.hospital-details p {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  color: #666;
+}
+
+.hospital-details svg {
+  color: #4b9b6e;
+}
+
+.hospital-services h4 {
+  color: #2c3e50;
+  margin-bottom: 12px;
+}
+
+.services-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.service-tag {
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.loading {
+  text-align: center;
+  padding: 40px;
   color: #666;
 }

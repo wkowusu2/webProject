@@ -8,7 +8,8 @@ import {
   AiOutlinePauseCircle,
   AiOutlineFile,
   AiOutlineDownload,
-  AiOutlineEye
+  AiOutlineEye,
+  AiOutlineClose
 } from 'react-icons/ai';
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "../../firebase.config";
@@ -28,6 +29,13 @@ const PatientSummary = () => {
     message: ''
   });
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [formData, setFormData] = useState({
+    receiverEmail: '',
+    subject: '',
+    content: ''
+  });
+  const [loading, setLoading] = useState(false);
 
   // Handle report text change
   const handleReportChange = (e) => {
@@ -138,6 +146,30 @@ const PatientSummary = () => {
     } catch (error) {
       console.error("Error sending report:", error);
       // Handle error appropriately
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      await addDoc(collection(db, "reports"), {
+        senderEmail: auth.currentUser.email,
+        receiverEmail: formData.receiverEmail,
+        subject: formData.subject,
+        content: formData.content,
+        timestamp: serverTimestamp()
+      });
+
+      setFormData({ receiverEmail: '', subject: '', content: '' });
+      setShowModal(false);
+      alert('Report sent successfully!');
+    } catch (error) {
+      console.error("Error sending report:", error);
+      alert('Failed to send report. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -338,6 +370,72 @@ const PatientSummary = () => {
       {showSuccessMessage && (
         <div className="success-message">
           Information sent successfully!
+        </div>
+      )}
+
+
+
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Send Report</h2>
+              <button 
+                className="close-btn"
+                onClick={() => setShowModal(false)}
+              >
+                <AiOutlineClose />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label>Recipient Email</label>
+                <input
+                  type="email"
+                  required
+                  value={formData.receiverEmail}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    receiverEmail: e.target.value
+                  })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Subject</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.subject}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    subject: e.target.value
+                  })}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Content</label>
+                <textarea
+                  required
+                  value={formData.content}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    content: e.target.value
+                  })}
+                />
+              </div>
+
+              <button 
+                type="submit" 
+                className="submit-btn"
+                disabled={loading}
+              >
+                {loading ? 'Sending...' : 'Send Report'}
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </div>
