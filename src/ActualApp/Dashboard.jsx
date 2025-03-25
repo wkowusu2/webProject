@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, orderBy, getDocs, addDoc, serverTimestamp, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, addDoc, serverTimestamp, deleteDoc, doc, getDoc, where } from 'firebase/firestore';
 import { db, auth } from '../../firebase.config';
 import "./Dashboard.css";
 import Documents from "./Documents";
@@ -329,19 +329,25 @@ const Dashboard = ({userId}) => {
 
   const fetchConnections = async () => {
     try {
-      const user = auth.currentUser;
-      if (!user) return;
-  
-      const connectionsRef = collection(db, 'users', user.uid, 'connections');
-      const querySnapshot = await getDocs(connectionsRef);
+              const userId = auth.currentUser.uid;
+              const userRef = doc(db, "users", userId);
+              const userDoc = await getDoc(userRef);
+        
+              if (userDoc.exists()) {
+                const userData = userDoc.data();
+        
+                // Fetch connections (user1 or user2 matching userId)
+                const u1 = query(collection(db, "connections"), where("user1", "==", userId));
+                const u2 = query(collection(db, "connections"), where("user2", "==", userId));
+        
+                const [conn1, conn2] = await Promise.all([getDocs(u1), getDocs(u2)]);
+                const allConnections = [...conn1.docs, ...conn2.docs].map((doc) => ({
+                  id: doc.id,
+                  ...doc.data(),
+                }));
       
-      const fetchedConnections = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      
-      setConnections(fetchedConnections);
-    } catch (error) {
+                setConnections(allConnections);
+    } }catch (error) {
       console.error('Error fetching connections:', error);
     }
   };
@@ -359,7 +365,7 @@ const Dashboard = ({userId}) => {
       // Handle image upload first if there's an image
       if (postImage) {
         try {
-          const storage = getStorage();
+          const storage = getStorage(auth);
           const imageRef = ref(storage, `posts/${user.uid}/${Date.now()}_${postImage.name}`);
           const snapshot = await uploadBytes(imageRef, postImage);
           imageUrl = await getDownloadURL(snapshot.ref);
@@ -375,7 +381,7 @@ const Dashboard = ({userId}) => {
         title: postTitle,
         content: newPost,
         authorId: user.uid,
-        authorName: user.displayName || 'Dr Krishna',
+        authorName: user.fullName || 'Dr Krishna',
         authorAvatar: user.photoURL || "https://randomuser.me/api/portraits/men/85.jpg",
         createdAt: serverTimestamp(),
         imageUrl: imageUrl, // Add the image URL to post data
