@@ -323,10 +323,10 @@ const Network = ({userId}) => {
         className="user-avatar"
       />
       <div className="user-info">
-        <h3>{user.fullName}</h3> 
-        <p>{user.title || 'Healthcare Professional'}</p>
+        <h3>{user.fullName}</h3> {console.log("user: ",user)}
+        <p>{user.specialization || 'Healthcare Professional'}</p>
         <div className="user-location">
-          <FaMapMarkerAlt /> {user.location || 'Location not specified'}
+          <FaMapMarkerAlt /> {user.institution  || 'Institution not specified'} {console.log("institution: ",user.institution)}
         </div>
       </div>
       {type === 'following' && (
@@ -445,7 +445,7 @@ const Network = ({userId}) => {
                     {connections.map((conn) => {
                         const connectedUserId = conn.user1 === userId ? conn.user2 : conn.user1;
                         const user = userDetails[connectedUserId]; // Get full user details
-                        console.log(user);
+                        console.log("listed user: ",user);
                         return user ? renderUserCard(user, "connection") : <p key={connectedUserId}>Loading...</p>;
                       })}
                   </div>
