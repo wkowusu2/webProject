@@ -18,6 +18,7 @@ const Network = ({userId}) => {
   const [following, setFollowing] = useState([]);
   const [followers, setFollowers] = useState([]);
   const [userDetails, setUserDetails] = useState({}); // Store user details
+  const [unconnectedUserList, setUnconnectedUserList] = useState([]);
   
   // State for modal
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -118,7 +119,48 @@ const Network = ({userId}) => {
     };
   
     fetchUserDetails();
-  }, [connections]); // Separate effect for user details fetching
+  }, [connections]);  // Separate effect for user details fetching
+
+  //fetching a list of all users except the current user 
+  //this is going to be used for the connect with other users side
+  useEffect(() => {
+    if (!userDetails) return;
+
+    const fetchConnections = async () => {
+      try {
+        const usersSnapshot = await getDocs(collection(db, "users"));
+        const allUsers = usersSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    
+        // Fetch connections where the user is either user1 or user2
+        const connectionsSnapshot = await getDocs(
+          query(collection(db, "connections"), 
+            where("user1", "==", auth.currentUser.uid))
+        );
+        
+        const reverseConnectionsSnapshot = await getDocs(
+          query(collection(db, "connections"), 
+            where("user2", "==", auth.currentUser.uid))
+        );
+    
+        const connectedUserIds = [
+          ...connectionsSnapshot.docs.map((doc) => doc.data().user2),
+          ...reverseConnectionsSnapshot.docs.map((doc) => doc.data().user1)
+        ];
+    
+        // Filter users who are not connected
+        const unconnectedUsers = allUsers.filter(user => 
+          user.id !== auth.currentUser.uid && !connectedUserIds.includes(user.id)
+        );
+    
+        console.log("Unconnected Users:", unconnectedUsers); // Debugging output
+        setUnconnectedUserList(unconnectedUsers);
+      } catch (error) {
+        console.error("Error fetching connections:", error);
+      }
+    };
+
+    fetchConnections();
+  }, [auth.currentUser]);
   
 
 
@@ -171,6 +213,7 @@ const Network = ({userId}) => {
     
     try {
       const currentUserId = auth.currentUser.uid;
+      console.lo
       const userRef = doc(db, 'users', currentUserId);
       
       // Add to following
@@ -276,11 +319,11 @@ const Network = ({userId}) => {
     >
       <img
         src={user.photoURL || 'https://via.placeholder.com/80'}
-        alt={user.displayName}
+        alt={user.fullName}
         className="user-avatar"
       />
       <div className="user-info">
-        <h3>{user.displayName}</h3>
+        <h3>{user.fullName}</h3> 
         <p>{user.title || 'Healthcare Professional'}</p>
         <div className="user-location">
           <FaMapMarkerAlt /> {user.location || 'Location not specified'}
@@ -297,19 +340,50 @@ const Network = ({userId}) => {
           Unfollow
         </button>
       )}
-      {type === 'follower' && !following.some(f => f.id === user.id) && (
+      {type === 'unconnected users' && (
         <button 
           className="follow-btn"
           onClick={(e) => {
             e.stopPropagation();
-            handleFollow(user.id);
+            sendRequest(userId , user.id);
           }}
         >
-          <FaUserPlus /> Follow
+          <FaUserPlus /> Add
         </button>
       )}
     </div>
   );
+
+  //sending a connection request
+  const sendRequest = async (senderId,receiverId) => {
+    try {
+      // Check if a request already exists
+      const q = query(
+        collection(db, "requests"),
+        where("senderId", "==", senderId),
+        where("receiverId", "==", receiverId)
+      );
+      const existingRequests = await getDocs(q);
+
+      if (!existingRequests.empty) {
+        alert("Connection request already sent!");
+        return;
+      }
+
+      // Add a new request
+      await addDoc(collection(db, "requests"), {
+        senderId,
+        receiverId,
+        status: "pending",
+        createdAt: new Date().toISOString(),
+      });
+
+      alert("Connection request sent!");
+    } catch (error) {
+      console.error("Error sending request:", error);
+    }
+  };
+
 
   return (
     <div className="network-page">
@@ -343,8 +417,8 @@ const Network = ({userId}) => {
                 className={`stat-item ${activeTab === 'social' ? 'active' : ''}`}
                 onClick={() => setActiveTab('social')}
               >
-                <h3>Following/followers</h3>
-                <div className="stat-number">{following.length + followers.length}</div>
+                <h3>Following/Connect with other users</h3>
+                {/* <div className="stat-number">{following.length + unconnectedUserList.length}</div>   */}
               </div>
             </div>
           </div>
@@ -391,10 +465,10 @@ const Network = ({userId}) => {
                     Following ({following.length})
                   </button>
                   <button 
-                    className={`tab-btn ${socialTab === 'followers' ? 'active' : ''}`}
-                    onClick={() => setSocialTab('followers')}
+                    className={`tab-btn ${socialTab === 'connect with other users' ? 'active' : ''}`}
+                    onClick={() => setSocialTab('connect with other users')}
                   >
-                    Followers ({followers.length})
+                    Connect with other users ({unconnectedUserList.length})
                   </button>
                 </div>
 
@@ -408,12 +482,12 @@ const Network = ({userId}) => {
                   </div>
                 )}
 
-                {socialTab === 'followers' && (
+                {socialTab === 'connect with other users' && (
                   <div className="social-grid">
-                    {followers.length > 0 ? (
-                      followers.map(user => renderUserCard(user, 'follower'))
+                    {unconnectedUserList.length > 0 ? (
+                      unconnectedUserList.map(user => renderUserCard(user, 'unconnected users')) //modified
                     ) : (
-                      <div className="empty-message">You don't have any followers yet</div>
+                      <div className="empty-message">No users to connect with</div>
                     )}
                   </div>
                 )}
