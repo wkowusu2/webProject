@@ -38,14 +38,6 @@ const ProfileModal = ({ isOpen, onClose, profile, profileType }) => {
             </div>
           </div>
 
-          <div className="detail-item">
-            <FaMapMarkerAlt className="detail-icon" />
-            <div className="detail-content">
-              <label>Location</label>
-              <p>{profile.location || 'Not specified'}</p>
-            </div>
-          </div>
-
           {profile.email && (
             <div className="detail-item">
               <FaEnvelope className="detail-icon" />
