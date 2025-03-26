@@ -151,7 +151,7 @@ const PATIENT_IMAGES = {
 const appointments = [
   {
     id: 1,
-    type: "Consultation",
+    type: "Emergency",
     date: "23.03.2025",
     time: "11:00-11:30",
     patient: "Faustina",
@@ -167,7 +167,7 @@ const appointments = [
   },
   {
     id: 3,
-    type: "Checkup",
+    type: "Consultation",
     date: "23.03.2025",
     time: "3:00-3:30",
     patient: "Flamy",
