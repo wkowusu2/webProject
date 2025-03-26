@@ -35,6 +35,7 @@ import {
 } from "react-icons/ai";
 import { signOut } from "firebase/auth";
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { updateProfile } from "firebase/auth";
 
  console.log("dashboard")
 
@@ -54,6 +55,16 @@ const Dashboard = ({userId}) => {
   const [postVideo, setPostVideo] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [likedPosts, setLikedPosts] = useState([]);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [userProfile, setUserProfile] = useState({
+    fullName: '',
+    email: '',
+    specialty: '',
+    hospital: '',
+    bio: '',
+    photoURL: ''
+  });
   const navigate = useNavigate();
   
   
@@ -205,11 +216,11 @@ const appointments = [
           <div className="user-profile">
             <img 
               src={auth.currentUser?.photoURL || "https://randomuser.me/api/portraits/men/85.jpg"} 
-              alt={`Dr. ${auth.currentUser?.displayName?.split(' ').pop() || 'Krishna'}`} 
+              alt={`Dr. ${auth.currentUser?.displayName?.split(' ').pop() || '######'}`} 
               className="user-profile-avatar" 
             />
             <h3 className="user-profile-greeting">
-              Hey, Dr. {auth.currentUser?.displayName?.split(' ').pop() || 'Krishna'}
+              Hey, Dr. {auth.currentUser?.displayName?.split(' ').pop() || '######'}
             </h3>
           </div>
           
@@ -510,6 +521,32 @@ const appointments = [
     }
   };
 
+  const fetchUserProfile = async () => {
+    try {
+      if (!auth.currentUser) return;
+      const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
+      if (userDoc.exists()) {
+        setUserProfile({
+          ...userDoc.data(),
+          photoURL: auth.currentUser.photoURL || "https://randomuser.me/api/portraits/men/85.jpg"
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+    }
+  };
+
+  const handleUpdateProfile = async (updatedData) => {
+    try {
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      await updateDoc(userRef, updatedData);
+      setUserProfile(prev => ({ ...prev, ...updatedData }));
+      setIsEditingProfile(false);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
+  };
+
   useEffect(() => {
     fetchPosts();
     fetchConnections(); // Add this line
@@ -573,6 +610,10 @@ const appointments = [
     };
   
     fetchLikedPosts();
+  }, []);
+
+  useEffect(() => {
+    fetchUserProfile();
   }, []);
   
   // Update the renderPostCreation function
@@ -815,14 +856,20 @@ const renderInvitationsCard = () => (
             />
             <div className="user-dropdown">
               <span className="user-name">
-                Dr. {auth.currentUser?.displayName?.split(' ').pop() || 'Krishna'}
+                Dr. {auth.currentUser?.displayName?.split(' ').pop() || '######'}
               </span>
               <AiOutlineDown className="dropdown-icon" />
             </div>
             
             {showUserMenu && (
               <div className="user-dropdown-menu">
-                <div className="menu-item">
+                <div 
+                  className="menu-item"
+                  onClick={() => {
+                    setShowProfileModal(true);
+                    setShowUserMenu(false);
+                  }}
+                >
                   <AiOutlineUser className="menu-icon" />
                   <span>My Profile</span>
                 </div>
@@ -892,6 +939,14 @@ const renderInvitationsCard = () => (
           handleCreatePost={handleCreatePost}
           isLoading={isLoading}
         />
+        <ProfileModal 
+          isOpen={showProfileModal}
+          onClose={() => setShowProfileModal(false)}
+          profile={userProfile}
+          isEditing={isEditingProfile}
+          setIsEditing={setIsEditingProfile}
+          onUpdate={handleUpdateProfile}
+        />
       </div>
     </div>
   );
@@ -947,7 +1002,7 @@ const PostModal = ({
               className="modal-user-avatar" 
             />
             <span className="modal-user-name">
-              {auth.currentUser?.displayName || "Dr Krishna"}
+              {auth.currentUser?.displayName || "Dr ######"}
             </span>
           </div>
 
@@ -1006,6 +1061,174 @@ const PostModal = ({
           >
             {isLoading ? 'Posting...' : 'Post'}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ProfileModal = ({ isOpen, onClose, profile, isEditing, setIsEditing, onUpdate }) => {
+  // Add formData state
+  const [formData, setFormData] = useState({
+    fullName: profile?.fullName || '',
+    specialty: profile?.specialty || '',
+    hospital: profile?.hospital || '',
+    bio: profile?.bio || '',
+    photoURL: profile?.photoURL || auth.currentUser?.photoURL
+  });
+
+  // Add handleSubmit function
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      // Update auth profile display name
+      await updateProfile(auth.currentUser, { 
+        displayName: formData.fullName 
+      });
+
+      // Update user document in Firestore
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      await updateDoc(userRef, {
+        fullName: formData.fullName,
+        specialty: formData.specialty,
+        hospital: formData.hospital,
+        bio: formData.bio
+      });
+
+      setIsEditing(false);
+      onUpdate(formData);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
+  };
+
+  // Add handlePhotoChange function
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      const storage = getStorage();
+      const photoRef = ref(storage, `profiles/${auth.currentUser.uid}/${file.name}`);
+      await uploadBytes(photoRef, file);
+      const photoURL = await getDownloadURL(photoRef);
+
+      await updateProfile(auth.currentUser, { photoURL });
+      
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      await updateDoc(userRef, { photoURL });
+
+      setFormData(prev => ({ ...prev, photoURL }));
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="profile-modal-overlay">
+      <div className="profile-modal">
+        <div className="profile-modal-header">
+          <h3>{isEditing ? 'Edit Profile' : 'Profile Information'}</h3>
+          <button className="close-button" onClick={onClose}>&times;</button>
+        </div>
+
+        <div className="profile-modal-content">
+          <div className="profile-image-section">
+            <div className="profile-image-container">
+              <img 
+                src={formData.photoURL || "https://randomuser.me/api/portraits/men/85.jpg"} 
+                alt="Profile" 
+                className="profile-image"
+              />
+              {isEditing && (
+                <label htmlFor="photoUpload" className="photo-change-icon">
+                  <AiOutlineCamera />
+                  <input
+                    id="photoUpload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                    hidden
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+
+          {isEditing ? (
+            <form className="profile-form" onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label>Full Name</label>
+                <input
+                  type="text"
+                  value={formData.fullName}
+                  onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Specialty</label>
+                <input
+                  type="text"
+                  value={formData.specialty}
+                  onChange={(e) => setFormData({...formData, specialty: e.target.value})}
+                />
+              </div>
+              <div className="form-group">
+                <label>Hospital</label>
+                <input
+                  type="text"
+                  value={formData.hospital}
+                  onChange={(e) => setFormData({...formData, hospital: e.target.value})}
+                />
+              </div>
+              <div className="form-group">
+                <label>Bio</label>
+                <input
+                  type="text"
+                  value={formData.bio}
+                  onChange={(e) => setFormData({...formData, bio: e.target.value})}
+                />
+              </div>
+              <div className="form-buttons">
+                <button type="button" className="cancel-button" onClick={() => setIsEditing(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="save-button">
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="profile-details">
+              <h4>{formData.fullName}</h4>
+              <p className="profile-specialty">{formData.specialty || 'No specialty added'}</p>
+              <p className="profile-hospital">{formData.hospital || 'No hospital added'}</p>
+              <p className="profile-bio">{formData.bio || 'No bio added'}</p>
+              <button className="edit-profile-button" onClick={() => setIsEditing(true)}>
+                <AiOutlineEdit /> Edit Profile
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="profile-modal-footer">
+          {isEditing ? (
+            <>
+              <button className="cancel-button" onClick={() => setIsEditing(false)}>
+                Cancel
+              </button>
+              <button className="save-button" onClick={handleSubmit}>
+                Save Changes
+              </button>
+            </>
+          ) : (
+            <button className="edit-profile-button" onClick={() => setIsEditing(true)}>
+              <AiOutlineEdit /> Edit Profile
+            </button>
+          )}
         </div>
       </div>
     </div>
