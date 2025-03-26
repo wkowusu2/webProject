@@ -5,6 +5,46 @@ import ProfileModal from './ProfileModal';
 import {  collection, getDocs, doc, updateDoc, arrayUnion, arrayRemove, query, where, getDoc, addDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 import { auth,db }  from '../../firebase.config.js';
 
+const PROFILE_IMAGES = {
+  doctors: [
+    'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=150',
+    'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150',
+    'https://images.unsplash.com/photo-1594824476967-48c8b964273f?w=150',
+    'https://images.unsplash.com/photo-1537368910025-700350fe46c7?w=150'
+  ],
+  nurses: [
+    'https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150',
+    'https://images.unsplash.com/photo-1622902046580-2b47f47f5471?w=150',
+    'https://images.unsplash.com/photo-1651008376811-b90baee60c1f?w=150'
+  ],
+  specialists: [
+    'https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=150',
+    'https://images.unsplash.com/photo-1618498082410-b4aa22193b38?w=150',
+    'https://images.unsplash.com/photo-1623854767648-e7bb8009f0db?w=150'
+  ]
+};
+
+const getProfilePicture = (userId, specialization = '') => {
+  if (!userId) return PROFILE_IMAGES.doctors[0]; // Default image
+
+  // Use the user ID to consistently select an image
+  const hash = userId.split('').reduce((acc, char) => {
+    return char.charCodeAt(0) + ((acc << 5) - acc);
+  }, 0);
+
+  let imageArray;
+  if (specialization.toLowerCase().includes('nurse')) {
+    imageArray = PROFILE_IMAGES.nurses;
+  } else if (specialization.toLowerCase().includes('specialist')) {
+    imageArray = PROFILE_IMAGES.specialists;
+  } else {
+    imageArray = PROFILE_IMAGES.doctors;
+  }
+
+  const index = Math.abs(hash) % imageArray.length;
+  return imageArray[index];
+};
+
 const Network = ({userId}) => {
   userId = auth.currentUser?.uid
   const [loading, setLoading] = useState(true);
@@ -119,7 +159,12 @@ const Network = ({userId}) => {
           const userRef = doc(db, "users", connectedUserId);
           const userSnap = await getDoc(userRef);
           if (userSnap.exists()) {
-            userInfo[connectedUserId] = { id: connectedUserId, ...userSnap.data() };
+            const userData = userSnap.data();
+            userInfo[connectedUserId] = { 
+              id: connectedUserId, 
+              ...userData,
+              photoURL: userData.photoURL || getProfilePicture(connectedUserId, userData.specialization)
+            };
           }
         }
       });
@@ -189,7 +234,54 @@ const Network = ({userId}) => {
     return () => unsubscribe();
   }, [userId]);
 
+  useEffect(() => {
+    const fetchInvitations = async () => {
+        if (!auth.currentUser) return;
 
+        try {
+            const userId = auth.currentUser.uid;
+            
+            // Query for pending invitations
+            const invitationsQuery = query(
+                collection(db, "requests"),
+                where("receiverId", "==", userId),
+                where("status", "==", "pending")
+            );
+
+            // Use onSnapshot for real-time updates
+            const unsubscribe = onSnapshot(invitationsQuery, async (snapshot) => {
+                const invitationsData = await Promise.all(
+                    snapshot.docs.map(async (doc) => {
+                        const data = doc.data();
+                        // Fetch sender details
+                        const senderDoc = await getDoc(doc(db, "users", data.senderId));
+                        const senderData = senderDoc.data();
+                        
+                        return {
+                            id: doc.id,
+                            ...data,
+                            senderDetails: {
+                                fullName: senderData?.fullName || 'Unknown User',
+                                photoURL: senderData?.photoURL,
+                                specialization: senderData?.specialization,
+                                institution: senderData?.institution
+                            }
+                        };
+                    })
+                );
+                console.log("Fetched invitations:", invitationsData); // Debug log
+                setInvitations(invitationsData);
+            });
+
+            return () => unsubscribe();
+        } catch (error) {
+            console.error("Error fetching invitations:", error);
+            setError("Failed to load invitations");
+        }
+    };
+
+    fetchInvitations();
+}, [auth.currentUser]);
   
   //handlesInvitation acceptance 
   const handleInvitationAcceptance = async (requestId,receiverId, senderId, accept) => {
@@ -306,36 +398,47 @@ const Network = ({userId}) => {
   };
 
   // Render invitation card
-  const renderInvitationCard = (invitation) => (
-    <div className="invitation-card" key={invitation.id}>
-      <img
-        src={invitation.photoURL || 'https://via.placeholder.com/80'}
-        alt={invitation.fullName}
-        className="invitation-avatar"
-      />
-      <div className="invitation-info">
-        <h3>{invitation.senderDetails.fullName}</h3>{console.log(invitation.senderDetails)}
-        <p>{invitation.senderDetails.specialization || 'Healthcare Professional'}</p>
-        <div className="invitation-location">
-          <FaMapMarkerAlt /> {invitation.senderDetails.institution || 'Location not specified'}
+  const renderInvitationCard = (invitation) => {
+    return (
+      <div className="invitation-card" key={invitation.id}>
+        <img
+          src={
+            invitation.senderDetails?.photoURL || 
+            getProfilePicture(invitation.senderId, invitation.senderDetails?.specialization)
+          }
+          alt={invitation.senderDetails?.fullName}
+          className="invitation-avatar"
+        />
+        <div className="invitation-info">
+          <h3>{invitation.senderDetails?.fullName || 'Unknown User'}</h3>
+          <p>{invitation.senderDetails?.specialization || 'Healthcare Professional'}</p>
+          <div className="invitation-location">
+            <FaMapMarkerAlt /> 
+            {invitation.senderDetails?.institution || 'Institution not specified'}
+          </div>
+        </div>
+        <div className="invitation-actions">
+          <button 
+            className="accept-btn"
+            onClick={() => handleInvitationAcceptance(
+              invitation.id,
+              invitation.receiverId,
+              invitation.senderId,
+              true
+            )}
+          >
+            Accept
+          </button>
+          <button 
+            className="ignore-btn"
+            onClick={() => handleIgnoreInvitation(invitation.id)}
+          >
+            Ignore
+          </button>
         </div>
       </div>
-      <div className="invitation-actions">
-        <button 
-          className="accept-btn"
-          onClick={() => handleInvitationAcceptance(invitation.id, invitation.receiverId,invitation.senderId, true)}
-        >
-          Accept
-        </button>
-        <button 
-          className="ignore-btn"
-          onClick={() => handleIgnoreInvitation(invitation.id)}
-        >
-          Ignore
-        </button>
-      </div>
-    </div>
-  );
+    );
+  };
 
   // Render user card
   const renderUserCard = (user, type) => (
@@ -345,7 +448,7 @@ const Network = ({userId}) => {
       onClick={() => openProfileModal(user, type)} 
     >
       <img
-        src={user.photoURL || 'https://via.placeholder.com/80'}
+        src={user.photoURL || getProfilePicture(user.id, user.specialization)}
         alt={user.fullName}
         className="user-avatar"
       />

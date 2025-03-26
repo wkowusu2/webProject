@@ -178,9 +178,9 @@
 }
 
 .invitations-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+    display: grid;
+    gap: 20px;
+    padding: 20px;
 }
 
 .connections-section {
@@ -209,17 +209,19 @@
 }
 
 .invitation-card {
-  position: relative;
-  padding: 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: transform 0.2s ease;
 }
 
 .invitation-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .invitation-status {
@@ -245,8 +247,8 @@
 
 .user-avatar,
 .invitation-avatar {
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -263,12 +265,22 @@
   font-weight: 600;
 }
 
+.invitation-info h3 {
+    margin: 0 0 8px;
+    color: #333;
+}
+
 .user-info p,
 .invitation-info p {
   margin: 5px 0 0;
   color: #666;
   font-size: 12px;
   line-height: 1.4;
+}
+
+.invitation-info p {
+    margin: 0 0 8px;
+    color: #666;
 }
 
 .user-location,
@@ -281,10 +293,17 @@
   margin-top: 5px;
 }
 
+.invitation-location {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+    font-size: 0.9rem;
+}
+
 .invitation-actions {
-  display: flex;
-  flex-direction: row;
-  gap: 5px;
+    display: flex;
+    gap: 12px;
 }
 
 .follow-btn,
@@ -302,6 +321,15 @@
   justify-content: center;
   gap: 5px;
   transition: background-color 0.2s, color 0.2s;
+}
+
+.accept-btn, .ignore-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
 }
 
 .follow-btn {
@@ -338,21 +366,21 @@
 }
 
 .accept-btn {
-  background-color: #4caf50;
-  color: white;
+    background-color: #4b9b6e;
+    color: white;
 }
 
 .accept-btn:hover {
-  background-color: #43a047;
+    background-color: #3a8a5d;
 }
 
 .ignore-btn {
-  background-color: #f44336;
-  color: white;
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
 }
 
 .ignore-btn:hover {
-  background-color: #e53935;
+    background-color: #e9ecef;
 }
 
 .empty-state {

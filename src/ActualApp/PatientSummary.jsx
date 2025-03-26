@@ -15,6 +15,21 @@ import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "../../firebase.config";
 import './PatientSummary.css';
 
+const PATIENT_IMAGES = {
+  female: [
+    'https://randomuser.me/api/portraits/women/32.jpg',
+    'https://randomuser.me/api/portraits/women/44.jpg',
+    'https://randomuser.me/api/portraits/women/68.jpg',
+    'https://randomuser.me/api/portraits/women/90.jpg'
+  ],
+  male: [
+    'https://randomuser.me/api/portraits/men/32.jpg',
+    'https://randomuser.me/api/portraits/men/44.jpg',
+    'https://randomuser.me/api/portraits/men/68.jpg',
+    'https://randomuser.me/api/portraits/men/90.jpg'
+  ]
+};
+
 const PatientSummary = () => {
   const [reportText, setReportText] = useState('');
   const [prescriptionText, setPrescriptionText] = useState('');
@@ -36,6 +51,14 @@ const PatientSummary = () => {
     content: ''
   });
   const [loading, setLoading] = useState(false);
+  const [isEditingPatient, setIsEditingPatient] = useState(false);
+  const [patientData, setPatientData] = useState({
+    name: 'Jane Deer',
+    age: '32',
+    gender: 'female',
+    avatar: PATIENT_IMAGES.female[0],
+    purpose: 'Regular checkup and follow-up on previous medication. Patient reports occasional headaches and mild fatigue.'
+  });
 
   // Handle report text change
   const handleReportChange = (e) => {
@@ -227,37 +250,122 @@ const PatientSummary = () => {
 
       <div className="patient-summary-right">
         <div className="patient-card">
-          <h3>Patient Card</h3>
+          <div className="patient-card-header">
+            <h3>Patient Card</h3>
+            <button 
+              className="edit-patient-btn"
+              onClick={() => setIsEditingPatient(true)}
+            >
+              <AiOutlineEdit /> Edit
+            </button>
+          </div>
           
           <div className="patient-info">
             <div className="patient-header">
-              <img 
-                src="https://randomuser.me/api/portraits/women/32.jpg" 
-                alt="Jane Deer" 
-                className="patient-avatar" 
-              />
+              <div className="avatar-container">
+                <img 
+                  src={patientData.avatar} 
+                  alt={patientData.name} 
+                  className="patient-avatar" 
+                />
+                {isEditingPatient && (
+                  <button 
+                    className="change-avatar-btn"
+                    onClick={() => {
+                      const images = PATIENT_IMAGES[patientData.gender.toLowerCase()];
+                      const newIndex = Math.floor(Math.random() * images.length);
+                      setPatientData(prev => ({
+                        ...prev,
+                        avatar: images[newIndex]
+                      }));
+                    }}
+                  >
+                    Change Photo
+                  </button>
+                )}
+              </div>
               <div className="patient-text">
-                <h4 className="patient-name">Jane Deer</h4>
-                <p className="patient-demographics">32 years, Female</p>
+                {isEditingPatient ? (
+                  <div className="edit-fields">
+                    <input
+                      type="text"
+                      value={patientData.name}
+                      onChange={(e) => setPatientData(prev => ({
+                        ...prev,
+                        name: e.target.value
+                      }))}
+                      className="edit-input"
+                    />
+                    <div className="demographics-edit">
+                      <input
+                        type="number"
+                        value={patientData.age}
+                        onChange={(e) => setPatientData(prev => ({
+                          ...prev,
+                          age: e.target.value
+                        }))}
+                        className="edit-input age"
+                      />
+                      <select
+                        value={patientData.gender}
+                        onChange={(e) => setPatientData(prev => ({
+                          ...prev,
+                          gender: e.target.value
+                        }))}
+                        className="edit-input gender"
+                      >
+                        <option value="female">Female</option>
+                        <option value="male">Male</option>
+                      </select>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <h4 className="patient-name">{patientData.name}</h4>
+                    <p className="patient-demographics">
+                      {patientData.age} years, {patientData.gender}
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           </div>
           
           <div className="visit-purpose">
             <h3>Purpose of Visit</h3>
-            <p>
-              Regular checkup and follow-up on previous medication. 
-              Patient reports occasional headaches and mild fatigue.
-            </p>
+            {isEditingPatient ? (
+              <textarea
+                value={patientData.purpose}
+                onChange={(e) => setPatientData(prev => ({
+                  ...prev,
+                  purpose: e.target.value
+                }))}
+                className="edit-textarea"
+              />
+            ) : (
+              <p>{patientData.purpose}</p>
+            )}
           </div>
-          
-          <div className="document-items">
-            <h3>Documents</h3>
-            <div className="document-upload-icon" onClick={handleDocumentUpload}>
-              <AiOutlineFile className="doc-icon" />
-              <span>Upload Documents</span>
+
+          {isEditingPatient && (
+            <div className="edit-actions">
+              <button 
+                className="save-btn"
+                onClick={() => setIsEditingPatient(false)}
+              >
+                Save Changes
+              </button>
+              <button 
+                className="cancel-btn"
+                onClick={() => {
+                  setIsEditingPatient(false);
+                  // Reset any unsaved changes if needed
+                }}
+              >
+                Cancel
+              </button>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

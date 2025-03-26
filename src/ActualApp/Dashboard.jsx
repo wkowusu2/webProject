@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, orderBy, getDocs, addDoc, serverTimestamp, deleteDoc, doc, getDoc, where } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, addDoc, serverTimestamp, deleteDoc, doc, getDoc, where, onSnapshot, limit } from 'firebase/firestore';
 import { db, auth } from '../../firebase.config';
 import "./Dashboard.css";
 import Documents from "./Documents";
@@ -52,6 +52,7 @@ const Dashboard = ({userId}) => {
   const [selectedPost, setSelectedPost] = useState(null);
   const [showPostOptions, setShowPostOptions] = useState(null);
   const [postVideo, setPostVideo] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
   const navigate = useNavigate();
   
   
@@ -120,33 +121,47 @@ const Dashboard = ({userId}) => {
     }
   ];
   
-  // Sample appointments data
-  const appointments = [
-    {
-      id: 1,
-      type: "Consultation",
-      date: "Today",
-      time: "9:00 AM",
-      patient: "John Smith",
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg"
-    },
-    {
-      id: 2,
-      type: "Follow-up",
-      date: "Today",
-      time: "11:30 AM",
-      patient: "Sarah Johnson",
-      avatar: "https://randomuser.me/api/portraits/women/32.jpg"
-    },
-    {
-      id: 3,
-      type: "Surgery",
-      date: "Tomorrow",
-      time: "10:00 AM",
-      patient: "Michael Brown",
-      avatar: "https://randomuser.me/api/portraits/men/33.jpg"
-    }
-  ];
+  // Add these appointment constants near the top of the file
+const PATIENT_IMAGES = {
+  male: [
+    'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?w=150',
+    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150',
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150'
+  ],
+  female: [
+    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+    'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
+    'https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?w=150'
+  ]
+};
+
+// Replace the existing appointments array with:
+const appointments = [
+  {
+    id: 1,
+    type: "Consultation",
+    date: "23.03.2025",
+    time: "11:00-11:30",
+    patient: "Faustina",
+    avatar: PATIENT_IMAGES.female[0]
+  },
+  {
+    id: 2,
+    type: "Checkup",
+    date: "23.03.2025",
+    time: "1:00-1:30",
+    patient: "David",
+    avatar: PATIENT_IMAGES.male[0]
+  },
+  {
+    id: 3,
+    type: "Checkup",
+    date: "23.03.2025",
+    time: "3:00-3:30",
+    patient: "Flamy",
+    avatar: PATIENT_IMAGES.male[1]
+  }
+];
   
   // Function to render the active component based on the selected tab
   const renderActiveComponent = () => {
@@ -232,7 +247,7 @@ const Dashboard = ({userId}) => {
               </div>
             </div>
             
-            {/* Appointments List */}
+            {/* Updated appointments list */}
             <div className="appointments-list">
               {appointments.map(appointment => (
                 <div key={appointment.id} className="appointment-card">
@@ -260,36 +275,50 @@ const Dashboard = ({userId}) => {
             </div>
             
             <button className="view-all-appointments" onClick={navigateToAppointments}>
-              <span>View all appointment</span>
+              <span>View all appointments</span>
             </button>
           </div>
           
           {/* Messages Section */}
           <div className="messages-section">
-            <h3 className="sidebar-section-title">Messages</h3>
+            <div className="messages-header">
+              <h3 className="sidebar-section-title">Messages</h3>
+              <button className="view-all-messages" onClick={() => setActiveTab("messages")}>
+                View All
+              </button>
+            </div>
             <div className="messages-container">
-              {messages.map((message, index) => (
-                <React.Fragment key={message.id}>
-                  <div className="message-item">
-                    <img 
-                      src={message.avatar} 
-                      alt={message.name} 
-                      className="message-avatar" 
-                    />
-                    <div className="message-content">
-                      <div className="message-header">
-                        <span className="message-sender">{message.name}</span>
-                        <span className="message-time">{message.time}</span>
+              {chatMessages.length === 0 ? (
+                <p className="no-messages">No messages yet</p>
+              ) : (
+                chatMessages.map((message, index) => (
+                  <React.Fragment key={message.id}>
+                    <div className="message-item">
+                      <img 
+                        src={message.avatar} 
+                        alt={message.name} 
+                        className="message-avatar" 
+                      />
+                      <div className="message-content">
+                        <div className="message-header">
+                          <span className="message-sender">{message.name}</span>
+                          <span className="message-time">{message.time}</span>
+                        </div>
+                        <p className="message-preview">{message.message}</p>
                       </div>
-                      <p className="message-preview">{message.message}</p>
+                      <button 
+                        className="message-action-button"
+                        onClick={() => {
+                          setActiveTab("messages");
+                        }}
+                      >
+                        <AiOutlineArrowRight />
+                      </button>
                     </div>
-                    <button className="message-action-button">
-                      <AiOutlinePlus />
-                    </button>
-                  </div>
-                  {index < messages.length - 1 && <div className="message-divider"></div>}
-                </React.Fragment>
-              ))}
+                    {index < chatMessages.length - 1 && <div className="message-divider"></div>}
+                  </React.Fragment>
+                ))
+              )}
             </div>
           </div>
         </div>
@@ -448,6 +477,38 @@ const Dashboard = ({userId}) => {
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [showPostOptions]);
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+  
+    const q = query(
+      collection(db, "chats"),
+      where("participants", "array-contains", auth.currentUser.uid),
+      orderBy("timestamp", "desc"),
+      limit(3)
+    );
+  
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const messagesData = await Promise.all(
+        snapshot.docs.map(async (doc) => {
+          const data = doc.data();
+          const otherUserId = data.sender === auth.currentUser.uid ? data.receiver : data.sender;
+          const userDoc = await getDoc(doc(db, "users", otherUserId));
+          
+          return {
+            id: doc.id,
+            message: data.message,
+            time: data.timestamp?.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            name: userDoc.data()?.fullName || "User",
+            avatar: userDoc.data()?.profilePicture || "https://randomuser.me/api/portraits/men/85.jpg"
+          };
+        })
+      );
+      setChatMessages(messagesData);
+    });
+  
+    return () => unsubscribe();
+  }, []);
   
   // Update the renderPostCreation function
 const renderPostCreation = () => {
