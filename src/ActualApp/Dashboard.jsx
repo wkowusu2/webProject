@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { collection, query, orderBy, getDocs, addDoc, serverTimestamp, deleteDoc, doc, getDoc, where, onSnapshot, limit } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, addDoc, serverTimestamp, deleteDoc, doc, getDoc, where, onSnapshot, limit, setDoc, updateDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebase.config';
 import "./Dashboard.css";
 import Documents from "./Documents";
@@ -53,6 +53,7 @@ const Dashboard = ({userId}) => {
   const [showPostOptions, setShowPostOptions] = useState(null);
   const [postVideo, setPostVideo] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
+  const [likedPosts, setLikedPosts] = useState([]);
   const navigate = useNavigate();
   
   
@@ -462,6 +463,53 @@ const appointments = [
     }
   };
 
+  const handleLikePost = async (postId, currentLikes) => {
+    try {
+      const userId = auth.currentUser?.uid;
+      if (!userId) return;
+  
+      const postRef = doc(db, 'posts', postId);
+      const likeRef = doc(db, 'likes', `${postId}_${userId}`);
+      const likeDoc = await getDoc(likeRef);
+  
+      if (likeDoc.exists()) {
+        // Unlike the post
+        await deleteDoc(likeRef);
+        await updateDoc(postRef, {
+          likes: currentLikes - 1
+        });
+        setLikedPosts(prev => prev.filter(id => id !== postId));
+        setPosts(prev => 
+          prev.map(post => 
+            post.id === postId 
+              ? { ...post, likes: post.likes - 1 }
+              : post
+          )
+        );
+      } else {
+        // Like the post
+        await setDoc(likeRef, {
+          userId,
+          postId,
+          createdAt: serverTimestamp()
+        });
+        await updateDoc(postRef, {
+          likes: currentLikes + 1
+        });
+        setLikedPosts(prev => [...prev, postId]);
+        setPosts(prev => 
+          prev.map(post => 
+            post.id === postId 
+              ? { ...post, likes: post.likes + 1 }
+              : post
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error handling like:', error);
+    }
+  };
+
   useEffect(() => {
     fetchPosts();
     fetchConnections(); // Add this line
@@ -508,6 +556,23 @@ const appointments = [
     });
   
     return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const fetchLikedPosts = async () => {
+      if (!auth.currentUser) return;
+      
+      const q = query(
+        collection(db, 'likes'),
+        where('userId', '==', auth.currentUser.uid)
+      );
+      
+      const snapshot = await getDocs(q);
+      const likedPostIds = snapshot.docs.map(doc => doc.id.split('_')[0]);
+      setLikedPosts(likedPostIds);
+    };
+  
+    fetchLikedPosts();
   }, []);
   
   // Update the renderPostCreation function
@@ -657,8 +722,11 @@ const renderPostCreation = () => {
               </div>
               
               <div className="post-actions-bar">
-                <div className="post-action">
-                  <AiOutlineLike className="post-action-icon" />
+                <div 
+                  className={`post-action ${likedPosts.includes(post.id) ? 'liked' : ''}`}
+                  onClick={() => handleLikePost(post.id, post.likes)}
+                >
+                  <AiOutlineLike className={`post-action-icon ${likedPosts.includes(post.id) ? 'liked' : ''}`} />
                   <span>{post.likes} Likes</span>
                 </div>
                 <div className="post-action">
