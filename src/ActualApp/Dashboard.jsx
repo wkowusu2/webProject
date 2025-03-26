@@ -401,6 +401,9 @@ const appointments = [
       const user = auth.currentUser;
       if (!user) return;
   
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const userData = userDoc.data();
+
       let imageUrl = null;
       
       // Handle image upload first if there's an image
@@ -422,7 +425,7 @@ const appointments = [
         title: postTitle,
         content: newPost,
         authorId: user.uid,
-        authorName: user.fullName || 'Dr Krishna',
+        authorName: user.fullName ||  user.displayName,
         authorAvatar: user.photoURL || "https://randomuser.me/api/portraits/men/85.jpg",
         createdAt: serverTimestamp(),
         imageUrl: imageUrl, // Add the image URL to post data
@@ -690,7 +693,14 @@ const renderPostCreation = () => {
                     className="post-avatar" 
                   />
                   <div className="post-author-info">
-                    <h4 className="post-author-name">{post.authorName}</h4>
+                  <h4 className="post-author-name">
+                  {post.authorName}
+                    {post.authorSpecialty && (
+                      <span className="post-author-specialty">
+                        {post.authorSpecialty}
+                      </span>
+                    )}
+                  </h4>
                     <p className="post-meta">
                       {post.createdAt instanceof Date 
                         ? post.createdAt.toLocaleDateString('en-US', {
