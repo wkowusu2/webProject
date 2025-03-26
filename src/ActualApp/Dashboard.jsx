@@ -787,7 +787,7 @@ const renderInvitationsCard = () => (
             <span className="nav-icon">
               <AiOutlineFileText />
             </span>
-            <span className="nav-text">Doc Disc</span>
+            <span className="nav-text">Doc Desk</span>
           </div>
           <div
             className={`nav-item ${activeTab === "network" ? "active" : ""}`}
